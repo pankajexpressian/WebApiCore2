@@ -16,10 +16,7 @@ namespace WebApiCore2.API.Entities
         [MaxLength(500)]
         public string Description { get; set; }
         
-        public IEnumerable<PointOfInterest> PointsOfInterest { get; set; }
-        public City()
-        {
-            PointsOfInterest = new List<PointOfInterest>();
-        }
+        public ICollection<PointOfInterest> PointsOfInterest { get; set; } = new List<PointOfInterest>();
+
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
 using WebApiCore2.API.Contexts;
 using WebApiCore2.API.Services;
+using AutoMapper;
 
 namespace WebApiCore2.API
 {
@@ -30,10 +31,14 @@ namespace WebApiCore2.API
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().AddMvcOptions(o =>
-            {
-                o.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
-            });
+            services.AddMvc()
+                .AddMvcOptions(o =>
+                {
+                    o.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                })
+                .AddJsonOptions(
+                options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                );
 
             //Use this to get property name as they are defined in model class. By default their name starts with lower case
             // in the result which is returned in response to api call
@@ -48,6 +53,9 @@ namespace WebApiCore2.API
             var cityInfoDbConnection = _configuration["ConnectionStrings:CityInfoDbConnection"];
             services.AddDbContext<CityInfoDbContext>(o => o.UseSqlServer(cityInfoDbConnection));
 
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            services.AddTransient<ICityRepository, CityRepository>();
 #if DEBUG
             services.AddTransient<IMailService, DevMailService>();
 #else
