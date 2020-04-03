@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using WebApiCore2.API.Models;
 
@@ -89,13 +90,13 @@ namespace WebApiCore2.API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (pointOfInterest.Name==pointOfInterest.Description)
+            if (pointOfInterest.Name == pointOfInterest.Description)
             {
                 ModelState.AddModelError("Description", "Name and Description can't be same");
                 return BadRequest(ModelState);
             }
-            var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id,cityId);
-            if (existingPointOfInterest==null)
+            var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id, cityId);
+            if (existingPointOfInterest == null)
             {
                 return NotFound();
             }
@@ -106,10 +107,70 @@ namespace WebApiCore2.API.Controllers
             return NoContent();
         }
 
+        [HttpPatch("{id}")]
+        public IActionResult UpdatePartiallyPointOfInterest(int cityId,
+            int id,
+            [FromBody] JsonPatchDocument<PointOfInterestForUpdateDto> jsonPatchDocument)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id, cityId);
+            if (existingPointOfInterest == null)
+            {
+                return NotFound();
+            }
+
+            var pointOfInterestToPatch = new PointOfInterestForUpdateDto()
+            {
+                Name = existingPointOfInterest.Name,
+                Description = existingPointOfInterest.Description
+            };
+
+            jsonPatchDocument.ApplyTo(pointOfInterestToPatch, ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (pointOfInterestToPatch.Name == pointOfInterestToPatch.Description)
+            {
+                ModelState.AddModelError("Description", "Name and Description can't be same");
+                return BadRequest(ModelState);
+            }
+
+            if (!TryValidateModel(pointOfInterestToPatch))
+            {
+                return BadRequest(ModelState);
+            }
+
+            existingPointOfInterest.Name = pointOfInterestToPatch.Name;
+            existingPointOfInterest.Description = pointOfInterestToPatch.Description;
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeletePointOfInterest(int cityId, int id)
+        {
+            var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id, cityId);
+            if (existingPointOfInterest == null)
+            {
+                return NotFound();
+            }
+
+            var city = _cityDataStore.Cities.Where(a => a.Id == cityId).FirstOrDefault();
+            city.PointsOfInterest.Remove(city.PointsOfInterest.Where(a => a.Id == id).FirstOrDefault());
+            return NoContent();
+        }
+
         [NonAction]
-        private PointOfInterestDto GetPointOfInterestByIdAndCityId(int id, int cityId) {
+        private PointOfInterestDto GetPointOfInterestByIdAndCityId(int id, int cityId)
+        {
             var existingCity = _cityDataStore.Cities.Where(a => a.Id == cityId).FirstOrDefault();
-            if (existingCity==null)
+            if (existingCity == null)
             {
                 return null;
             }
