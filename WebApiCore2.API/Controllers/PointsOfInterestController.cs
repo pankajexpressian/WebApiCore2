@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using WebApiCore2.API.Models;
+using WebApiCore2.API.Services;
 
 namespace WebApiCore2.API.Controllers
 {
@@ -13,6 +15,14 @@ namespace WebApiCore2.API.Controllers
     public class PointsOfInterestController : ControllerBase
     {
         private readonly CityDataStore _cityDataStore = CityDataStore.Instance;
+        private readonly ILogger<PointOfInterestDto> _logger;
+        private readonly IMailService _mailService;
+
+        public PointsOfInterestController(ILogger<PointOfInterestDto> logger, IMailService mailService)
+        {
+            _logger = logger;
+            _mailService = mailService;
+        }
 
         [HttpGet]
         public IActionResult GetPointsOfInterest(int cityId)
@@ -155,15 +165,28 @@ namespace WebApiCore2.API.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeletePointOfInterest(int cityId, int id)
         {
-            var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id, cityId);
-            if (existingPointOfInterest == null)
+            try
             {
-                return NotFound();
-            }
+                var existingPointOfInterest = GetPointOfInterestByIdAndCityId(id, cityId);
+                if (existingPointOfInterest == null)
+                {
+                    return NotFound();
+                }
 
-            var city = _cityDataStore.Cities.Where(a => a.Id == cityId).FirstOrDefault();
-            city.PointsOfInterest.Remove(city.PointsOfInterest.Where(a => a.Id == id).FirstOrDefault());
-            return NoContent();
+                var city = _cityDataStore.Cities.Where(a => a.Id == cityId).FirstOrDefault();
+                city.PointsOfInterest.Remove(city.PointsOfInterest.Where(a => a.Id == id).FirstOrDefault());
+                _logger.LogInformation($"Deleted point of interest with id {id} from city with id {cityId}");
+
+                _mailService.SendMail($"Point Of Interest with Id : {id} Deleted", "Content");
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogCritical(ex, $"Error while deleting point of interest with id {id} from city with id {cityId}");
+                return StatusCode(500, "Something went wrong at the server, please try again later");
+            }
         }
 
         [NonAction]
