@@ -9,5 +9,6 @@ namespace WebApiCore2.API.Services
     {
         IEnumerable<City> GetAll();
         City Get(int cityId,bool includePointOfInterest=false);
+        bool Add(City city);
     }
 }

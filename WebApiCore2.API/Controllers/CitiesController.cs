@@ -61,11 +61,15 @@ namespace WebApiCore2.API.Controllers
         }
 
         [HttpPost]
-        public JsonResult AddCity([FromBody]CityDto city)
+        public IActionResult AddCity(CityWithoutPointsOfInterestDto city)
         {
-            city.Id = CityDataStore.Instance.Cities.Count() + 1;
-            CityDataStore.Instance.Cities.Add(city);
-            return new JsonResult(city);
+            var cityToAdd = _mapper.Map<City>(city);
+            var res = _cityRepository.Add(cityToAdd);
+            if (res)
+            {
+                return StatusCode(201, "Success");
+            }
+            return StatusCode(500, "Error while saving");
         }
     }
 }

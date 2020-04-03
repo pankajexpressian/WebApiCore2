@@ -11,6 +11,7 @@ namespace WebApiCore2.API.Profiles
         public CityProfile()
         {
             CreateMap<Entities.City, Models.CityWithoutPointsOfInterestDto>();
+            CreateMap<Models.CityWithoutPointsOfInterestDto,Entities.City>();
             CreateMap<Entities.City, Models.CityDto>();
         }
     }

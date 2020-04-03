@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApiCore2.API.Contexts;
 using WebApiCore2.API.Entities;
+using WebApiCore2.API.Models;
 
 namespace WebApiCore2.API.Services
 {
@@ -30,6 +31,14 @@ namespace WebApiCore2.API.Services
             var cities = _contex.Cities.ToList();
            
             return cities;
+        }
+
+        public bool Add(City city)
+        {
+            //var cityToAdd=
+            _contex.Cities.Add(city);
+            _contex.SaveChanges();
+            return true;
         }
     }
 }
