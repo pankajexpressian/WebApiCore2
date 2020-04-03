@@ -7,16 +7,27 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
+using WebApiCore2.API.Contexts;
 using WebApiCore2.API.Services;
 
 namespace WebApiCore2.API
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+
+        public Startup(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().AddMvcOptions(o =>
@@ -33,6 +44,9 @@ namespace WebApiCore2.API
             //        customSerializer.NamingStrategy = null;
             //    }
             //});
+
+            var cityInfoDbConnection = _configuration["ConnectionStrings:CityInfoDbConnection"];
+            services.AddDbContext<CityInfoDbContext>(o => o.UseSqlServer(cityInfoDbConnection));
 
 #if DEBUG
             services.AddTransient<IMailService, DevMailService>();
